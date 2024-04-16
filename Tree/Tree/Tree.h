@@ -8,7 +8,6 @@
 #include <sstream>
 #include<string>
 
-const int Spacing = 40;
 const int HightDifferenc = 50;
 const int NodeRadius = 15;
 
@@ -99,9 +98,9 @@ public:
 		amountOfSpaces[0] = 1;
 
 		for (int i = 1; i < hight; i++)
-			amountOfSpaces[i] = amountOfSpaces[i - 1] * 2 + 2;
+			amountOfSpaces[i] = amountOfSpaces[i - 1] * 2 + 1;
 
-		RenderWindow window(VideoMode(amountOfSpaces[hight - 1] * Spacing * 2 + 300, hight * 2 + 500), "Binary Tree");
+		RenderWindow window(VideoMode(amountOfSpaces[hight - 1] * NodeRadius * 4 + 300, hight * 2 + 500), "Binary Tree");
 
 		while (window.isOpen())
 		{
@@ -121,7 +120,7 @@ public:
 
 			for (int i = hight - 1; i > -1; i--)
 			{
-				int x = Spacing * amountOfSpaces[i];
+				int x = NodeRadius * 2 * amountOfSpaces[i];
 				y += HightDifferenc;
 
 				vector<Tree<T>*> cur_Level = Levels[hight - i - 1];
@@ -131,20 +130,20 @@ public:
 					Positions[cur_Level[0]] = Vector2f(x, y);
 					DrawNode(cur_Level[0], Positions, window);
 				}
-				else
-					x += Spacing;
+
+				x += NodeRadius * 2;
 
 				for (int k = 1; k < cur_Level.size(); k++)
 				{
-					x += Spacing * amountOfSpaces[i + 1];
+					x += NodeRadius * 2 * amountOfSpaces[i + 1];
 
 					if (cur_Level[k] != nullptr)
 					{
 						Positions[cur_Level[k]] = Vector2f(x, y);
 						DrawNode(cur_Level[k], Positions, window);
 					}
-					else
-						x += Spacing;
+
+					x += NodeRadius * 2;
 				}
 			}
 
@@ -202,7 +201,7 @@ public:
 
 		int* amountOfSpaces = new int[hight];
 
-		amountOfSpaces[0] = 0;
+		amountOfSpaces[0] = 1;
 
 		for (int i = 1; i < hight; i++)
 			amountOfSpaces[i] = amountOfSpaces[i - 1] * 2 + 1;
