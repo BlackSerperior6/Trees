@@ -1,7 +1,4 @@
-﻿#include <SFML/Graphics.hpp>
-#include "Tree.h"
-
-using namespace sf;
+﻿#include "Tree.h"
 
 int main()
 {
@@ -21,15 +18,7 @@ int main()
 	for (int i = 0; i < amount; i++)
 		tree.Add(rand() % 100);
 
-	cout << endl << endl;
-
-	tree.ReadAllThreeWays();
-
-	cout << endl << endl;
-
 	tree.PrintVerticaly();
 
-	cout << endl;
-
-	tree.PrintHorizontaly();
+	tree.Draw();
 }
