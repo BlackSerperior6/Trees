@@ -213,23 +213,20 @@ public:
 
 			vector<T*> cur_Level = Levels[hight - i - 1];
 
-			if (cur_Level[0] == nullptr)
-				cout << "■";
-			else
+			if (cur_Level[0] != nullptr)
 				cout << *cur_Level[0];
+
+			cout << " ";
 
 			for (int k = 1; k < cur_Level.size(); k++)
 			{
 				for (int u = 0; u < amountOfSpaces[i + 1]; u++)
 					cout << " ";
 
-
-				if (cur_Level[k] == nullptr)
-					cout << "■";
-				else
-				{
+				if (cur_Level[k] != nullptr)
 					cout << *cur_Level[k];
-				}
+
+				cout << " ";
 			}
 
 			cout << endl << endl;
