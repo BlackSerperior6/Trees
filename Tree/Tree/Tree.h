@@ -8,8 +8,7 @@
 #include <sstream>
 #include<string>
 
-const int HightDifferenc = 50;
-const int NodeRadius = 15;
+const int NodeRadius = 20;
 
 using namespace sf;
 
@@ -100,7 +99,9 @@ public:
 		for (int i = 1; i < hight; i++)
 			amountOfSpaces[i] = amountOfSpaces[i - 1] * 2 + 1;
 
-		RenderWindow window(VideoMode(amountOfSpaces[hight - 1] * NodeRadius * 4 + 300, hight * 2 + 500), "Binary Tree");
+		int HightDifference = (NodeRadius * 2) + 10;
+
+		RenderWindow window(VideoMode(amountOfSpaces[hight - 1] * NodeRadius * 4, (hight * HightDifference) + NodeRadius), "Binary Tree");
 
 		while (window.isOpen())
 		{
@@ -116,12 +117,12 @@ public:
 
 			map<Tree<T>*, Vector2f> Positions;
 
-			int y = hight - HightDifferenc + (NodeRadius * 2);
+			int y = hight - HightDifference + (NodeRadius * 2);
 
 			for (int i = hight - 1; i > -1; i--)
 			{
 				int x = NodeRadius * 2 * amountOfSpaces[i];
-				y += HightDifferenc;
+				y += HightDifference;
 
 				vector<Tree<T>*> cur_Level = Levels[hight - i - 1];
 
