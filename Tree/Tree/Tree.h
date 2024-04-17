@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include <SFML/Graphics.hpp>
 #include <map>
@@ -8,7 +7,7 @@
 #include <sstream>
 #include<string>
 
-const int NodeRadius = 20;
+int NodeRadius = 20;
 
 using namespace sf;
 
@@ -19,7 +18,7 @@ class Tree
 {
 public:
 
-	Tree() { Left = Right = Parent = nullptr; Data = nullptr; Balanced = true; }
+	Tree() { Left = Right = Parent = nullptr; Data = nullptr; Balanced = SearchTree = false; }
 
 	~Tree() { Clear(); }
 
@@ -33,6 +32,11 @@ public:
 		return Balanced;
 	}
 
+	bool IsSearchTree()
+	{
+		return SearchTree;
+	}
+
 	int GetHight() 
 	{
 		if (Data == nullptr)
@@ -41,56 +45,13 @@ public:
 		return GetHight(this);
 	}
 
-	int Diameter()
-	{
-		if (Data == nullptr)
-			return 0;
-
-		return GetDiameterOfABranch(this);
-	}
-
 	void Draw()
 	{
 		vector<vector<Tree<T>*>> Levels;
 
 		int hight = GetHight();
 
-		vector<Tree<T>*> bufferOfTrees;
-
-		bufferOfTrees.push_back(this);
-
-		for (int i = 0; i < hight; i++)
-		{
-			vector<Tree<T>*> branchesOnTheLevel;
-
-			vector<Tree<T>*> updatedBufferOfTrees;
-
-			for (int j = 0; j < bufferOfTrees.size(); j++)
-			{
-				Tree<T>* current = bufferOfTrees[j];
-
-				if (current == nullptr)
-				{
-					branchesOnTheLevel.push_back(nullptr);
-
-					for (int i = 0; i < 2; i++)
-						updatedBufferOfTrees.push_back(nullptr);
-				}
-				else
-				{
-					updatedBufferOfTrees.push_back(current->Left);
-					updatedBufferOfTrees.push_back(current->Right);
-					branchesOnTheLevel.push_back(current);
-				}
-			}
-
-			Levels.push_back(branchesOnTheLevel);
-
-			bufferOfTrees.clear();
-
-			for (int k = 0; k < updatedBufferOfTrees.size(); k++)
-				bufferOfTrees.push_back(updatedBufferOfTrees[k]);
-		}
+		ReadIntoVector(Levels, hight);
 
 		int* amountOfSpaces = new int[hight];
 
@@ -99,6 +60,7 @@ public:
 		for (int i = 1; i < hight; i++)
 			amountOfSpaces[i] = amountOfSpaces[i - 1] * 2 + 1;
 
+		NodeRadius = 100 / hight;
 		int HightDifference = (NodeRadius * 2) + 10;
 
 		RenderWindow window(VideoMode(amountOfSpaces[hight - 1] * NodeRadius * 4, (hight * HightDifference) + NodeRadius), "Binary Tree");
@@ -126,17 +88,9 @@ public:
 
 				vector<Tree<T>*> cur_Level = Levels[hight - i - 1];
 
-				if (cur_Level[0] != nullptr)
+				for (int k = 0; k < cur_Level.size(); k++)
 				{
-					Positions[cur_Level[0]] = Vector2f(x, y);
-					DrawNode(cur_Level[0], Positions, window);
-				}
-
-				x += NodeRadius * 2;
-
-				for (int k = 1; k < cur_Level.size(); k++)
-				{
-					x += NodeRadius * 2 * amountOfSpaces[i + 1];
+					x += (k == 0 ? 0 : NodeRadius * 2 * amountOfSpaces[i + 1]);
 
 					if (cur_Level[k] != nullptr)
 					{
@@ -159,46 +113,11 @@ public:
 		if (Data == nullptr)
 			return;
 
-		vector<vector<T*>> Levels;
+		vector<vector<Tree<T>*>> Levels;
 
 		int hight = GetHight();
 
-		vector<Tree<T>*> bufferOfTrees;
-
-		bufferOfTrees.push_back(this);
-
-		for (int i = 0; i < hight; i++)
-		{
-			vector<T*> elements;
-
-			vector<Tree<T>*> updatedBufferOfTrees;
-
-			for (int j = 0; j < bufferOfTrees.size(); j++)
-			{
-				Tree<T>* current = bufferOfTrees[j];
-
-				if (current == nullptr)
-				{
-					elements.push_back(nullptr);
-
-					for (int i = 0; i < 2; i++)
-						updatedBufferOfTrees.push_back(nullptr);
-				}
-				else
-				{
-					updatedBufferOfTrees.push_back(current->Left);
-					updatedBufferOfTrees.push_back(current->Right);
-					elements.push_back(current->Data);
-				}
-			}
-
-			Levels.push_back(elements);
-
-			bufferOfTrees.clear();
-
-			for (int k = 0; k < updatedBufferOfTrees.size(); k++)
-				bufferOfTrees.push_back(updatedBufferOfTrees[k]);
-		}
+		ReadIntoVector(Levels, hight);
 
 		int* amountOfSpaces = new int[hight];
 
@@ -209,25 +128,35 @@ public:
 
 		for (int i = hight - 1; i > -1; i--)
 		{
-			for (int j = 0; j < amountOfSpaces[i]; j++)
-				cout << " ";
+			vector<Tree<T>*> cur_Level = Levels[hight - i - 1];
 
-			vector<T*> cur_Level = Levels[hight - i - 1];
-
-			if (cur_Level[0] != nullptr)
-				cout << *cur_Level[0];
-
-			cout << " ";
-
-			for (int k = 1; k < cur_Level.size(); k++)
+			for (int k = 0; k < cur_Level.size(); k++)
 			{
-				for (int u = 0; u < amountOfSpaces[i + 1]; u++)
+				bool IsNullPtr = cur_Level[k] == nullptr;
+				
+				int spaces = k == 0 ? amountOfSpaces[i] : amountOfSpaces[i + 1];
+
+				if (!IsNullPtr)
+				{
+					ostringstream buffer;
+
+					T element = cur_Level[k]->GetData();
+
+					buffer << fixed <<  setprecision(1) << element;
+
+					int fullpart = (int) element;
+					
+					spaces -= (buffer.str().length() - 3);
+				}
+					
+
+				for (int j = 0; j < spaces; j++)
 					cout << " ";
 
-				if (cur_Level[k] != nullptr)
-					cout << *cur_Level[k];
-
-				cout << " ";
+				if (!IsNullPtr)
+					cout << cur_Level[k]->GetData();
+				else
+					cout << " ";
 			}
 
 			cout << endl << endl;
@@ -337,6 +266,12 @@ public:
 			return;
 
 		Balanced = true;
+		SearchTree = false;
+
+		if (Data == nullptr)
+			return;
+
+		vector<vector<T>*> Branches;
 
 		T* Buffer = new T[GetAmountOfElements()];
 		int counter = 1;
@@ -355,9 +290,10 @@ public:
 
 	void ConvertToSeacrhTree()
 	{
-		if (!Balanced)
+		if (SearchTree)
 			return;
 
+		SearchTree = true;
 		Balanced = false;
 
 		if (Data == nullptr)
@@ -387,7 +323,42 @@ public:
 			return;
 		}
 
-		if (Balanced)
+		if (!Balanced && !SearchTree)
+		{
+			int choice;
+
+			do
+			{
+				cout << endl << endl << "Куда пойдем?\n1 - влево!\n2 - вправо" << endl << endl;
+				cin >> choice;
+			}
+			while (choice != 1 && choice != 2);
+
+			if (choice == 1)
+			{
+				if (Left == nullptr)
+				{
+					Left = new Tree<T>();
+					Left->Parent = this;
+				}
+				
+				Left->Add(data);
+			}
+			else
+			{
+				if (Right == nullptr)
+				{
+					Right = new Tree<T>();
+					Right->Parent = this;
+				}
+
+				Right->Add(data);
+			}
+
+			return;
+		}
+
+		else if (Balanced)
 			AddBalanced(data);
 		else
 			AddBySearchMethod(data);
@@ -406,21 +377,10 @@ private:
 	Tree<T>* Parent;
 	Tree<T>* Left;
 	Tree<T>* Right;
-	T* Data;
-
+	bool SearchTree;
 	bool Balanced;
 
-	int GetDiameterOfABranch(Tree<T>* branch)
-	{
-		if (branch == nullptr)
-			return 0;
-
-		int LeftHight = GetHight(branch->Left);
-		int RightHight = GetHight(branch->Right);
-
-		return max(GetHight(branch->Left) + GetHight(branch->Right) + 1,
-			max(GetDiameterOfABranch(branch->Left), GetDiameterOfABranch(branch->Right)));
-	}
+	T* Data;
 
 	void PrintHor(int depth = 0)
 	{
@@ -546,7 +506,7 @@ private:
 			{
 				Left = new Tree<T>();
 				Left->Parent = this;
-				Left->Balanced = false;
+				Left->SearchTree = true;
 				Left->Add(data);
 			}
 			else
@@ -558,7 +518,7 @@ private:
 			{
 				Right = new Tree<T>();
 				Right->Parent = this;
-				Right->Balanced = false;
+				Right->SearchTree = true;
 				Right->Add(data);
 			}
 			else
@@ -583,6 +543,7 @@ private:
 			{
 				Left = new Tree<T>();
 				Left->Parent = this;
+				Left->Balanced = true;
 				Left->Add(data);
 			}
 			else
@@ -594,6 +555,7 @@ private:
 			{
 				Right = new Tree<T>();
 				Right->Parent = this;
+				Right->Balanced = true;
 				Right->Add(data);
 			}
 			else
@@ -633,39 +595,69 @@ private:
 
 		window.draw(circle);
 
+		window.draw(text);
+
 		if (branch->Parent != nullptr)
 		{
 			Vector2f ParentPosition = positions[branch->Parent];
 
-			int ParentX = ParentPosition.x;
-
 			if (branch->Parent->Left == branch)
-				ParentX -= NodeRadius;
+			{
+				ParentPosition.x -= NodeRadius - 2;
+				position.x += NodeRadius + 2;
+			}	
 			else
-				ParentX += NodeRadius;
-
-			int positionX = position.x;
-
-			if (branch->Parent->Left == branch)
-				positionX += NodeRadius;
-			else
-				positionX -= NodeRadius;
-
-			ParentPosition.x = ParentX;
-			position.x = positionX;
-			
+			{
+				ParentPosition.x += NodeRadius + 2;
+				position.x -= NodeRadius - 2;
+			}
 
 			VertexArray line(Lines, 2);
-
-			line[0].color = Color::Black;
-			line[1].color = Color::Black;
 
 			line[0].position = ParentPosition;
 			line[1].position = position;
 
 			window.draw(line);
 		}
+	}
 
-		window.draw(text);
+	void ReadIntoVector(vector<vector<Tree<T>*>> &container, int hight)
+	{
+		vector<Tree<T>*> bufferOfTrees;
+
+		bufferOfTrees.push_back(this);
+
+		for (int i = 0; i < hight; i++)
+		{
+			vector<Tree<T>*> branchesOnTheLevel;
+
+			vector<Tree<T>*> updatedBufferOfTrees;
+
+			for (int j = 0; j < bufferOfTrees.size(); j++)
+			{
+				Tree<T>* current = bufferOfTrees[j];
+
+				if (current == nullptr)
+				{
+					branchesOnTheLevel.push_back(nullptr);
+
+					for (int i = 0; i < 2; i++)
+						updatedBufferOfTrees.push_back(nullptr);
+				}
+				else
+				{
+					updatedBufferOfTrees.push_back(current->Left);
+					updatedBufferOfTrees.push_back(current->Right);
+					branchesOnTheLevel.push_back(current);
+				}
+			}
+
+			container.push_back(branchesOnTheLevel);
+
+			bufferOfTrees.clear();
+
+			for (int k = 0; k < updatedBufferOfTrees.size(); k++)
+				bufferOfTrees.push_back(updatedBufferOfTrees[k]);
+		}
 	}
 };

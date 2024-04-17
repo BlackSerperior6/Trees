@@ -15,10 +15,14 @@ int main()
 	} 
 	while (amount <= 0);
 
+	tree.ConvertToSeacrhTree();
+
 	for (int i = 0; i < amount; i++)
 		tree.Add(rand() % 100);
 
-	tree.PrintVerticaly();
+	tree.Draw();
+
+	tree.ConvertToBalanced();
 
 	tree.Draw();
 }
