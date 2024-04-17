@@ -7,7 +7,7 @@
 #include <sstream>
 #include<string>
 
-int NodeRadius = 20;
+int NodeRadius;
 
 using namespace sf;
 
@@ -47,24 +47,27 @@ public:
 
 	void Draw()
 	{
-		vector<vector<Tree<T>*>> Levels;
+		vector<vector<Tree<T>*>> Levels; //Двумерный массив, изображающий собой дерево
 
-		int hight = GetHight();
+		int hight = GetHight(); //Высота
 
-		ReadIntoVector(Levels, hight);
+		ReadIntoVector(Levels, hight); //Заполнение массива
 
-		int* amountOfSpaces = new int[hight];
+		int* amountOfSpaces = new int[hight]; //Массив пробелов
 
-		amountOfSpaces[0] = 1;
+		amountOfSpaces[0] = 1; //В самом низу пробел 1
 
 		for (int i = 1; i < hight; i++)
-			amountOfSpaces[i] = amountOfSpaces[i - 1] * 2 + 1;
+			amountOfSpaces[i] = amountOfSpaces[i - 1] * 2 + 1; //Расчет кол-ва пробело
 
-		NodeRadius = 100 / hight;
-		int HightDifference = (NodeRadius * 2) + 10;
+		NodeRadius = 100 / hight; //Расчет радиуса вершины дерева
+		int HightDifference = (NodeRadius * 2) + 10; //Расчет разницы по y между уровнями
 
-		RenderWindow window(VideoMode(amountOfSpaces[hight - 1] * NodeRadius * 4, (hight * HightDifference) + NodeRadius), "Binary Tree");
+		//Создание окна, рассчет его размеров
+		RenderWindow window(VideoMode(amountOfSpaces[hight - 1] * NodeRadius * 4, 
+			(hight * HightDifference) + NodeRadius), "Binary Tree");
 
+		//Базовый цикл работы окна
 		while (window.isOpen())
 		{
 			Event ev;
@@ -75,37 +78,38 @@ public:
 					window.close();
 			}
 
-			window.clear(Color(128, 128, 128)); //Серый
+			window.clear(Color(128, 128, 128)); //Заливка серым
 
-			map<Tree<T>*, Vector2f> Positions;
+			map<Tree<T>*, Vector2f> Positions; //Словарь вершин дерева и их координат
 
-			int y = hight - HightDifference + (NodeRadius * 2);
+			int y = hight - HightDifference + (NodeRadius * 2); //Изначальная y координата
 
 			for (int i = hight - 1; i > -1; i--)
 			{
-				int x = NodeRadius * 2 * amountOfSpaces[i];
-				y += HightDifference;
+				int x = NodeRadius * 2 * amountOfSpaces[i]; //Расчет x первого элм. уровня
+				y += HightDifference; //Расчет y
 
-				vector<Tree<T>*> cur_Level = Levels[hight - i - 1];
+				vector<Tree<T>*> cur_Level = Levels[hight - i - 1]; //Получаем уровень дерева
 
 				for (int k = 0; k < cur_Level.size(); k++)
 				{
-					x += (k == 0 ? 0 : NodeRadius * 2 * amountOfSpaces[i + 1]);
+					//Если элемент не первый, то перерасчет x
+					x += (k == 0 ? 0 : NodeRadius * 2 * amountOfSpaces[i + 1]); 
 
-					if (cur_Level[k] != nullptr)
+					if (cur_Level[k] != nullptr) //Если элемент уровня не 0
 					{
-						Positions[cur_Level[k]] = Vector2f(x, y);
-						DrawNode(cur_Level[k], Positions, window);
+						Positions[cur_Level[k]] = Vector2f(x, y); //Заносим вершину в словарь
+						DrawNode(cur_Level[k], Positions, window); //Рисуем вершину
 					}
 
-					x += NodeRadius * 2;
+					x += NodeRadius * 2; //Сдвиг по x обязателен
 				}
 			}
 
-			window.display();
+			window.display(); //Отображение
 		}
 
-		delete[] amountOfSpaces;
+		delete[] amountOfSpaces; //Чистка памяти
 	}
 
 	void PrintVerticaly()
@@ -565,42 +569,52 @@ private:
 
 	void DrawNode(Tree<T>* branch, map<Tree<T>*, Vector2f>& positions, RenderWindow& window)
 	{
-		Vector2f position = positions[branch];
+		Vector2f position = positions[branch]; //Получаем позицию ветки
 
-		CircleShape circle(NodeRadius);
+		CircleShape circle(NodeRadius); //Генерируем круг
 
+		//Настройка внешнего вида круга
 		circle.setFillColor(Color::White);
 		circle.setOutlineColor(Color::Black);
 		circle.setOutlineThickness(3);
+
+		//Сдвиг круга по его же радиусу
 		circle.setPosition(position.x - NodeRadius, position.y - NodeRadius);
 
-		T element = branch->GetData();
+		T element = branch->GetData(); //Получаем элемент
 
+		//Обработка чисел с плавающей точкой
 		Text text;
 		ostringstream buffer;
 		buffer << fixed << setprecision(1) << element;
 
+		//Загрузка шрифта
 		Font font;
 		font.loadFromFile("CyrilicOld.TTF");
 		text.setFont(font);
 
+		//Настройка текста
 		text.setString(buffer.str());
 		text.setFillColor(Color::Black);
 		text.setOutlineColor(Color::White);
 		text.setCharacterSize(NodeRadius);
 
+		//Отцентровка текста
 		FloatRect textRect = text.getLocalBounds();
 		text.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
 		text.setPosition(Vector2f(position.x, position.y));
 
+		//Рисуем круг
 		window.draw(circle);
 
+		//Рисуем текст
 		window.draw(text);
 
-		if (branch->Parent != nullptr)
+		if (branch->Parent != nullptr) //Если есть родитель
 		{
-			Vector2f ParentPosition = positions[branch->Parent];
+			Vector2f ParentPosition = positions[branch->Parent]; //Позиция родителя
 
+			//Сдвигаем x коорд. переменной
 			if (branch->Parent->Left == branch)
 			{
 				ParentPosition.x -= NodeRadius - 2;
@@ -612,52 +626,61 @@ private:
 				position.x -= NodeRadius - 2;
 			}
 
+			//Массив вершин, представляющий собой линию
 			VertexArray line(Lines, 2);
 
+			//Задаем позицию начала и конца линии
 			line[0].position = ParentPosition;
 			line[1].position = position;
 
+			//Рисуем
 			window.draw(line);
 		}
 	}
 
 	void ReadIntoVector(vector<vector<Tree<T>*>> &container, int hight)
 	{
-		vector<Tree<T>*> bufferOfTrees;
+		vector<Tree<T>*> bufferOfBranches; //Буфер деревьев - потомков
 
-		bufferOfTrees.push_back(this);
+		bufferOfBranches.push_back(this); //Заносим корень дерева
 
 		for (int i = 0; i < hight; i++)
 		{
-			vector<Tree<T>*> branchesOnTheLevel;
+			vector<Tree<T>*> branchesOnTheLevel; //Вектор вершин на уровне i
 
-			vector<Tree<T>*> updatedBufferOfTrees;
+			vector<Tree<T>*> updatedBufferOfTrees; //Вектор потомков
 
-			for (int j = 0; j < bufferOfTrees.size(); j++)
+			for (int j = 0; j < bufferOfBranches.size(); j++)
 			{
-				Tree<T>* current = bufferOfTrees[j];
+				Tree<T>* current = bufferOfBranches[j]; //Получаем текущую вершину
 
-				if (current == nullptr)
+				if (current == nullptr) //Если нулевая
 				{
-					branchesOnTheLevel.push_back(nullptr);
+					branchesOnTheLevel.push_back(nullptr); //Заносим в вектор нулевой элемент
 
 					for (int i = 0; i < 2; i++)
-						updatedBufferOfTrees.push_back(nullptr);
+						updatedBufferOfTrees.push_back(nullptr); //И два нулевых элемента в вектор потомков
 				}
 				else
 				{
+					//Заносим потомков
 					updatedBufferOfTrees.push_back(current->Left);
 					updatedBufferOfTrees.push_back(current->Right);
+
+					//И сам элемент
 					branchesOnTheLevel.push_back(current);
 				}
 			}
 
+			//Записываем в двумерный массив вершины уровня
 			container.push_back(branchesOnTheLevel);
 
-			bufferOfTrees.clear();
+			//Очистка предыдущего буффера
+			bufferOfBranches.clear();
 
+			//Занос в него новых элементов
 			for (int k = 0; k < updatedBufferOfTrees.size(); k++)
-				bufferOfTrees.push_back(updatedBufferOfTrees[k]);
+				bufferOfBranches.push_back(updatedBufferOfTrees[k]);
 		}
 	}
 };
