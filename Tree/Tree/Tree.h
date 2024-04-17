@@ -113,7 +113,7 @@ public:
 					window.close();
 			}
 
-			window.clear(Color::Black);
+			window.clear(Color(128, 128, 128)); //Серый
 
 			map<Tree<T>*, Vector2f> Positions;
 
@@ -609,7 +609,7 @@ private:
 
 		circle.setFillColor(Color::White);
 		circle.setOutlineColor(Color::Black);
-		circle.setOutlineThickness(2);
+		circle.setOutlineThickness(3);
 		circle.setPosition(position.x - NodeRadius, position.y - NodeRadius);
 
 		T element = branch->GetData();
@@ -640,14 +640,25 @@ private:
 			int ParentX = ParentPosition.x;
 
 			if (branch->Parent->Left == branch)
-				ParentX -= NodeRadius - 1;
+				ParentX -= NodeRadius;
 			else
-				ParentX += NodeRadius - 1;
+				ParentX += NodeRadius;
+
+			int positionX = position.x;
+
+			if (branch->Parent->Left == branch)
+				positionX += NodeRadius;
+			else
+				positionX -= NodeRadius;
 
 			ParentPosition.x = ParentX;
+			position.x = positionX;
 			
 
 			VertexArray line(Lines, 2);
+
+			line[0].color = Color::Black;
+			line[1].color = Color::Black;
 
 			line[0].position = ParentPosition;
 			line[1].position = position;
