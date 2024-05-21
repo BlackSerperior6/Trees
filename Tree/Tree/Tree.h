@@ -45,7 +45,7 @@ public:
 		return GetHight(this);
 	}
 
-	void Draw()
+	void DrawVertical()
 	{
 		vector<vector<Tree<T>*>> Levels; //Двумерный массив, изображающий собой дерево
 
@@ -112,6 +112,73 @@ public:
 		delete[] amountOfSpaces; //Чистка памяти
 	}
 
+	void DrawHorizontal()
+	{
+		vector<vector<Tree<T>*>> Levels; //Двумерный массив, изображающий собой дерево
+
+		int hight = GetHight(); //Высота
+
+		ReadIntoVector(Levels, hight); //Заполнение массива
+
+		int* amountOfSpaces = new int[hight]; //Массив пробелов
+
+		amountOfSpaces[0] = 1; //В самом низу пробел 1
+
+		for (int i = 1; i < hight; i++)
+			amountOfSpaces[i] = amountOfSpaces[i - 1] * 2 + 1; //Расчет кол-ва пробело
+
+		NodeRadius = 100 / (hight + 2); //Расчет радиуса вершины дерева
+		int XDifference = (NodeRadius * 2) + 10; //Расчет разницы по y между уровнями
+
+		//Создание окна, рассчет его размеров
+		RenderWindow window(VideoMode((hight * XDifference) + NodeRadius,
+			amountOfSpaces[hight - 1] * NodeRadius * 4), "Binary Tree");
+
+		//Базовый цикл работы окна
+		while (window.isOpen())
+		{
+			Event ev;
+
+			while (window.pollEvent(ev))
+			{
+				if (ev.type == Event::Closed)
+					window.close();
+			}
+
+			window.clear(Color(128, 128, 128)); //Заливка серым
+
+			map<Tree<T>*, Vector2f> Positions; //Словарь вершин дерева и их координат
+
+			int x = hight - XDifference + (NodeRadius * 2); //Изначальная x координата
+
+			for (int i = hight - 1; i > -1; i--)
+			{
+				int y = NodeRadius * 2 * amountOfSpaces[i]; //Расчет y первого элм. уровня
+				x += XDifference; //Расчет x
+
+				vector<Tree<T>*> cur_Level = Levels[hight - i - 1]; //Получаем уровень дерева
+
+				for (int k = 0; k < cur_Level.size(); k++)
+				{
+					//Если элемент не первый, то перерасчет x
+					y += (k == 0 ? 0 : NodeRadius * 2 * amountOfSpaces[i + 1]);
+
+					if (cur_Level[k] != nullptr) //Если элемент уровня не 0
+					{
+						Positions[cur_Level[k]] = Vector2f(x, y); //Заносим вершину в словарь
+						DrawNode(cur_Level[k], Positions, window); //Рисуем вершину
+					}
+
+					y += NodeRadius * 2; //Сдвиг по y обязателен
+				}
+			}
+
+			window.display(); //Отображение
+		}
+
+		delete[] amountOfSpaces; //Чистка памяти
+	}
+
 	void PrintVerticaly()
 	{
 		if (Data == nullptr)
@@ -139,28 +206,14 @@ public:
 				bool IsNullPtr = cur_Level[k] == nullptr;
 				
 				int spaces = k == 0 ? amountOfSpaces[i] : amountOfSpaces[i + 1];
-
-				if (!IsNullPtr)
-				{
-					ostringstream buffer;
-
-					T element = cur_Level[k]->GetData();
-
-					buffer << fixed <<  setprecision(1) << element;
-
-					int fullpart = (int) element;
 					
-					spaces -= (buffer.str().length() - 3);
-				}
-					
-
 				for (int j = 0; j < spaces; j++)
-					cout << " ";
+					cout << setw(5) << " ";
 
-				if (!IsNullPtr)
-					cout << cur_Level[k]->GetData();
+				if (cur_Level[k] != nullptr)
+					cout << setw(5) << cur_Level[k]->GetData();
 				else
-					cout << " ";
+					cout << setw(5) << " ";
 			}
 
 			cout << endl << endl;
@@ -217,14 +270,14 @@ public:
 			return true;
 		}
 
-		if (Balanced)
+		if (!SearchTree)
 		{
-			bool result = RemoveFromBalanced(key, Left, true);
+			bool result = RemoveFromANonSearchTree(key, Left, true);
 
 			if (!result)
-				result = RemoveFromBalanced(key, Right, false);
+				result = RemoveFromANonSearchTree(key, Right, false);
 
-			if (result)
+			if (result && Balanced)
 			{
 				Balanced = false;
 				ConvertToBalanced();
@@ -257,6 +310,7 @@ public:
 					current->Parent->Right = nullptr;
 
 				delete current;
+
 				flag = true;
 			}
 		}
@@ -274,8 +328,6 @@ public:
 
 		if (Data == nullptr)
 			return;
-
-		vector<vector<T>*> Branches;
 
 		T* Buffer = new T[GetAmountOfElements()];
 		int counter = 1;
@@ -381,10 +433,11 @@ private:
 	Tree<T>* Parent;
 	Tree<T>* Left;
 	Tree<T>* Right;
-	bool SearchTree;
-	bool Balanced;
 
 	T* Data;
+
+	bool SearchTree;
+	bool Balanced;
 
 	void PrintHor(int depth = 0)
 	{
@@ -442,7 +495,7 @@ private:
 		return (rightHight > leftHight ? rightHight : leftHight) + 1;
 	}
 
-	bool RemoveFromBalanced(T key, Tree<T>* branch, bool isLeft)
+	bool RemoveFromANonSearchTree(T key, Tree<T>* branch, bool isLeft)
 	{
 		if (branch == nullptr)
 			return false;
@@ -459,10 +512,10 @@ private:
 			return true;
 		}
 
-		bool result = RemoveFromBalanced(key, branch->Left, true);
+		bool result = RemoveFromANonSearchTree(key, branch->Left, true);
 
 		if (!result)
-			result = RemoveFromBalanced(key, branch->Right, false);
+			result = RemoveFromANonSearchTree(key, branch->Right, false);
 
 		return result;	
 	}
@@ -612,30 +665,33 @@ private:
 
 		if (branch->Parent != nullptr) //Если есть родитель
 		{
-			Vector2f ParentPosition = positions[branch->Parent]; //Позиция родителя
-
-			//Сдвигаем x коорд. переменной
-			if (branch->Parent->Left == branch)
-			{
-				ParentPosition.x -= NodeRadius - 2;
-				position.x += NodeRadius + 2;
-			}	
-			else
-			{
-				ParentPosition.x += NodeRadius + 2;
-				position.x -= NodeRadius - 2;
-			}
+			Vector2f ParentPositionBoundary = CalculateBoundaryPoint(position, positions[branch->Parent], NodeRadius + 2); //Позиция родителя
+			Vector2f ChildPossitionBoundary = CalculateBoundaryPoint(positions[branch->Parent], position, NodeRadius + 2);
 
 			//Массив вершин, представляющий собой линию
 			VertexArray line(Lines, 2);
 
 			//Задаем позицию начала и конца линии
-			line[0].position = ParentPosition;
-			line[1].position = position;
+			line[0].position = ParentPositionBoundary;
+			line[1].position = ChildPossitionBoundary;
 
 			//Рисуем
 			window.draw(line);
 		}
+	}
+
+	Vector2f CalculateBoundaryPoint(Vector2f point1, Vector2f point2, double minus)
+	{
+		double Lenght = GetSideLenght(point1, point2) - minus;
+
+		double a = atan2(point2.y - point1.y, point2.x - point1.x);
+
+		return Vector2f(point1.x + Lenght * cos(a), point1.y + Lenght * sin(a));
+	}
+
+	double GetSideLenght(Vector2f& point1, Vector2f& point2) //Метод нахождения длины между двумя точками
+	{
+		return sqrt(pow(point2.x - point1.x, 2) + pow(point2.y - point1.y, 2));
 	}
 
 	void ReadIntoVector(vector<vector<Tree<T>*>> &container, int hight)
