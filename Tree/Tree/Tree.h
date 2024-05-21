@@ -45,6 +45,14 @@ public:
 		return GetHight(this);
 	}
 
+	double GetSumOfAllElements()
+	{
+		if (Data == nullptr)
+			return 0;
+
+		return SumHelper(this);
+	}
+
 	void ReadAllThreeWays()
 	{
 		if (Data == nullptr)
@@ -454,6 +462,14 @@ private:
 
 	bool SearchTree;
 	bool Balanced;
+
+	double SumHelper(Tree<T>* branch)
+	{
+		if (branch == nullptr)
+			return 0;
+
+		return *branch->Data + SumHelper(branch->Left) + SumHelper(branch->Right);
+	}
 
 	void DirectWay(Tree<T>* branch) 
 	{
