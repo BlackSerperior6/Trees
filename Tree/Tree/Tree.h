@@ -45,6 +45,224 @@ public:
 		return GetHight(this);
 	}
 
+	void ReadAllThreeWays()
+	{
+		if (Data == nullptr)
+		{
+			cout << "Пустое дерево" << endl;
+			return;
+		}
+
+		cout << "Прямой способо: ";
+		DirectWay(this);
+		cout << endl << "Симметричиный способ: ";
+		SymmetricWay(this);
+		cout << endl << "Обратный способ: ";
+		ReverseWay(this);
+	}
+
+	void Clear()
+	{
+		if (Left != nullptr)
+			delete Left;
+
+		if (Right != nullptr)
+			delete Right;
+
+		Left = Right = nullptr;
+
+		delete Data;
+		Data = nullptr;
+	}
+
+	int GetAmountOfElements()
+	{
+		if (Data == nullptr)
+			return 0;
+
+		return GetAmountofElements(this);
+	}
+
+	bool Remove(T key)
+	{
+		if (Data == nullptr)
+			return false;
+
+		if (*Data == key)
+		{
+			Clear();
+			return true;
+		}
+
+		if (!SearchTree)
+		{
+			bool result = RemoveFromANonSearchTree(key, Left, true);
+
+			if (!result)
+				result = RemoveFromANonSearchTree(key, Right, false);
+
+			if (result && Balanced)
+			{
+				Balanced = false;
+				ConvertToBalanced();
+			}
+
+			return result;
+		}
+
+		Tree<T>* current;
+		bool flag = false;
+
+		if (key < *Data)
+			current = Left;
+		else
+			current = Right;
+
+		while (current != nullptr && !flag)
+		{
+			if (key < *current->Data)
+				current = current->Left;
+
+			else if (key > *current->Data)
+				current = current->Right;
+
+			else
+			{
+				if (current->Parent->Left == current)
+					current->Parent->Left = nullptr;
+				else
+					current->Parent->Right = nullptr;
+
+				delete current;
+
+				flag = true;
+			}
+		}
+
+		return flag;
+	}
+
+	void ConvertToBalanced()
+	{
+		if (Balanced)
+		{
+			Balanced = false;
+
+			if (Left != nullptr)
+				Left->ConvertToBalanced();
+
+			if (Right != nullptr)
+				Right->ConvertToBalanced();
+
+			return;
+		}
+
+		Balanced = true;
+		SearchTree = false;
+
+		if (Data == nullptr)
+			return;
+
+		T* Buffer = new T[GetAmountOfElements()];
+		int counter = 1;
+		Buffer[0] = *Data;
+
+		counter = ReadBrachIntoArray(Buffer, counter, Left);
+		counter = ReadBrachIntoArray(Buffer, counter, Right);
+
+		Clear();
+
+		for (int i = 0; i < counter; i++)
+			Add(Buffer[i]);
+
+		delete[] Buffer;
+	}
+
+	void ConvertToSeacrhTree()
+	{
+		if (SearchTree)
+		{
+			SearchTree = false;
+
+			if (Left != nullptr)
+				Left->ConvertToSeacrhTree();
+
+			if (Right != nullptr)
+				Right->ConvertToSeacrhTree();
+
+			return;
+		}
+
+		SearchTree = true;
+		Balanced = false;
+
+		if (Data == nullptr)
+			return;
+
+		T* Buffer = new T[GetAmountOfElements()];
+		int counter = 1;
+		Buffer[0] = *Data;
+
+		counter = ReadBrachIntoArray(Buffer, counter, Left);
+		counter = ReadBrachIntoArray(Buffer, counter, Right);
+
+		Clear();
+
+		for (int i = 0; i < counter; i++)
+			Add(Buffer[i]);
+
+		delete[] Buffer;
+	}
+
+	void Add(T data)
+	{
+		if (Data == nullptr)
+		{
+			Data = new T;
+			*Data = data;
+			return;
+		}
+
+		if (!Balanced && !SearchTree)
+		{
+			int choice;
+
+			do
+			{
+				cout << endl << endl << "Куда пойдем?\n1 - влево!\n2 - вправо" << endl << endl;
+				cin >> choice;
+			} while (choice != 1 && choice != 2);
+
+			if (choice == 1)
+			{
+				if (Left == nullptr)
+				{
+					Left = new Tree<T>();
+					Left->Parent = this;
+				}
+
+				Left->Add(data);
+			}
+			else
+			{
+				if (Right == nullptr)
+				{
+					Right = new Tree<T>();
+					Right->Parent = this;
+				}
+
+				Right->Add(data);
+			}
+
+			return;
+		}
+
+		else if (Balanced)
+			AddBalanced(data);
+		else
+			AddBySearchMethod(data);
+	}
+
 	void DrawVertical()
 	{
 		vector<vector<Tree<T>*>> Levels; //Двумерный массив, изображающий собой дерево
@@ -226,218 +444,6 @@ public:
 		delete[] amountOfSpaces;
 	}
 
-	void ReadAllThreeWays()
-	{
-		if (Data == nullptr)
-		{
-			cout << "Пустое дерево" << endl;
-			return;
-		}
-
-		cout << "Прямой способо: ";
-		DirectWay(this);
-		cout << endl << "Симметричиный способ: ";
-		SymmetricWay(this);
-		cout << endl << "Обратный способ: ";
-		ReverseWay(this);
-	}
-
-	void Clear()
-	{
-		if (Left != nullptr)
-			delete Left;
-
-		if (Right != nullptr)
-			delete Right;
-
-		Left = Right = nullptr;
-		delete Data;
-		Data = nullptr;
-	}
-
-	int GetAmountOfElements()
-	{
-		if (Data == nullptr)
-			return 0;
-
-		return GetAmountofElements(this);
-	}
-
-	bool Remove(T key)
-	{
-		if (Data == nullptr)
-			return false;
-
-		if (*Data == key)	
-		{
-			Clear();
-			return true;
-		}
-
-		if (!SearchTree)
-		{
-			bool result = RemoveFromANonSearchTree(key, Left, true);
-
-			if (!result)
-				result = RemoveFromANonSearchTree(key, Right, false);
-
-			if (result && Balanced)
-			{
-				Balanced = false;
-				ConvertToBalanced();
-			}
-
-			return result;
-		}
-
-		Tree<T>* current;
-		bool flag = false;
-
-		if (key < *Data)
-			current = Left;
-		else
-			current = Right;
-
-		while (current != nullptr && !flag)
-		{
-			if (key < *current->Data)
-				current = current->Left;
-
-			else if (key > *current->Data)
-				current = current->Right;
-
-			else
-			{
-				if (current->Parent->Left == current)
-					current->Parent->Left = nullptr;
-				else
-					current->Parent->Right = nullptr;
-
-				delete current;
-
-				flag = true;
-			}
-		}
-
-		return flag;
-	}
-
-	void ConvertToBalanced()
-	{
-		if (Balanced)
-		{
-			Balanced = false;
-			return;
-		}
-
-		Balanced = true;
-		SearchTree = false;
-
-		if (Data == nullptr)
-			return;
-
-		T* Buffer = new T[GetAmountOfElements()];
-		int counter = 1;
-		Buffer[0] = *Data;
-
-		counter = ReadBrachIntoArray(Buffer, counter, Left);
-		counter = ReadBrachIntoArray(Buffer, counter, Right);
-
-		Clear();
-
-		for (int i = 0; i < counter; i++)
-			Add(Buffer[i]);
-
-		delete[] Buffer;
-	}
-
-	void ConvertToSeacrhTree()
-	{
-		if (SearchTree)
-		{
-			SearchTree = false;
-			return;
-		}
-
-		SearchTree = true;
-		Balanced = false;
-
-		if (Data == nullptr)
-			return;
-
-		T* Buffer = new T[GetAmountOfElements()];
-		int counter = 1;
-		Buffer[0] = *Data;
-
-		counter = ReadBrachIntoArray(Buffer, counter, Left);
-		counter = ReadBrachIntoArray(Buffer, counter, Right);
-
-		Clear();
-
-		for (int i = 0; i < counter; i++)
-			Add(Buffer[i]);
-
-		delete[] Buffer;
-	}
-
-	void Add(T data) 
-	{
-		if (Data == nullptr)
-		{
-			Data = new T;
-			*Data = data;
-			return;
-		}
-
-		if (!Balanced && !SearchTree)
-		{
-			int choice;
-
-			do
-			{
-				cout << endl << endl << "Куда пойдем?\n1 - влево!\n2 - вправо" << endl << endl;
-				cin >> choice;
-			}
-			while (choice != 1 && choice != 2);
-
-			if (choice == 1)
-			{
-				if (Left == nullptr)
-				{
-					Left = new Tree<T>();
-					Left->Parent = this;
-				}
-				
-				Left->Add(data);
-			}
-			else
-			{
-				if (Right == nullptr)
-				{
-					Right = new Tree<T>();
-					Right->Parent = this;
-				}
-
-				Right->Add(data);
-			}
-
-			return;
-		}
-
-		else if (Balanced)
-			AddBalanced(data);
-		else
-			AddBySearchMethod(data);
-	}
-
-	void PrintHorizontaly()
-	{
-		if (Data == nullptr)
-			return;
-
-		PrintHor(0);
-	}
-
 private:
 
 	Tree<T>* Parent;
@@ -448,21 +454,6 @@ private:
 
 	bool SearchTree;
 	bool Balanced;
-
-	void PrintHor(int depth = 0)
-	{
-		if (Right != nullptr)
-			Right->PrintHor(depth + 1);
-
-		for (int i = 0; i < depth; i++)
-			cout << "   ";
-
-		cout << *Data << endl;
-
-
-		if (Left != nullptr)
-			Left->PrintHor(depth + 1);
-	}
 
 	void DirectWay(Tree<T>* branch) 
 	{
