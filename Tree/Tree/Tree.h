@@ -194,6 +194,10 @@ public:
 
 		amountOfSpaces[0] = 1;
 
+		int width = 0;
+
+		GetMaxLenght(this, width);
+
 		for (int i = 1; i < hight; i++)
 			amountOfSpaces[i] = amountOfSpaces[i - 1] * 2 + 1;
 
@@ -208,12 +212,12 @@ public:
 				int spaces = k == 0 ? amountOfSpaces[i] : amountOfSpaces[i + 1];
 					
 				for (int j = 0; j < spaces; j++)
-					cout << setw(5) << " ";
+					cout << setw(width) << " ";
 
 				if (cur_Level[k] != nullptr)
-					cout << setw(5) << cur_Level[k]->GetData();
+					cout << setw(width) << cur_Level[k]->GetData();
 				else
-					cout << setw(5) << " ";
+					cout << setw(width) << " ";
 			}
 
 			cout << endl << endl;
@@ -321,7 +325,10 @@ public:
 	void ConvertToBalanced()
 	{
 		if (Balanced)
+		{
+			Balanced = false;
 			return;
+		}
 
 		Balanced = true;
 		SearchTree = false;
@@ -347,7 +354,10 @@ public:
 	void ConvertToSeacrhTree()
 	{
 		if (SearchTree)
+		{
+			SearchTree = false;
 			return;
+		}
 
 		SearchTree = true;
 		Balanced = false;
@@ -687,6 +697,27 @@ private:
 		double a = atan2(point2.y - point1.y, point2.x - point1.x);
 
 		return Vector2f(point1.x + Lenght * cos(a), point1.y + Lenght * sin(a));
+	}
+
+	void GetMaxLenght(Tree<T> *branch, int& currentLenght)
+	{
+		if (branch == nullptr)
+			return;
+
+		int fullPart = (int) *branch->Data;
+
+		int lenghtToCompare;
+
+		if (fullPart - *branch->Data == 0)
+			lenghtToCompare = to_string(fullPart).length();
+		else
+			lenghtToCompare = to_string(*branch->Data).length();
+
+		if (currentLenght < lenghtToCompare)
+			currentLenght = lenghtToCompare;
+
+		GetMaxLenght(branch->Left, currentLenght);
+		GetMaxLenght(branch->Right, currentLenght);
 	}
 
 	double GetSideLenght(Vector2f& point1, Vector2f& point2) //Метод нахождения длины между двумя точками
